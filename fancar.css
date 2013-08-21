@@ -1,0 +1,20 @@
+/* TODO:
+  - gradient background.
+  - drop shadow.
+  - rounded borders.
+
+  - responsive?
+
+  - what needs to happen for gpu to kick in on ipad?
+*/
+
+
+body {
+    color: #fff;
+    background-color: #222;
+    font-size: 22px;
+}
+
+p {
+    margin: 24px;
+}
