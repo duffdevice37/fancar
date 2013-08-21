@@ -38,7 +38,9 @@ div.carousel {
 }
 
 .carousel ul {
+    position:absolute;
     list-style-type: none;
+    overflow:none;
 }
 
 .carousel li {
