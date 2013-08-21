@@ -8,7 +8,7 @@ FanCar = function() {
     this.calculateLayoutForCurrentWindowSize();
 
     this.m_currentCenterPoint = this.calculateCenterPointForListEl(0);
-    this.m_currentVelocity = 2000;  // x pixels per second
+    this.m_currentVelocity = 0;
 
     this.m_lastDragInfo = null;
     this.attachHandlers();
@@ -21,7 +21,9 @@ FanCar = function() {
 // TODO: consider making x padding a fixed value instead. e.g. on ipad portrait mode this value calculates to be pretty small.
 FanCar.prototype.kPaddingXFactor = 0.1;  // padding values specified as factors so it scales with window size.
 FanCar.prototype.kPaddingYFactor = 0.2;
-FanCar.prototype.kFrictionDecel = 1000;   // pixels per second^2
+FanCar.prototype.kFrictionDecel = 1400;   // pixels per second^2
+FanCar.prototype.kCenterBubbleRangeFactor = 0.4;  // this fraction of the screen causes items to zoom in
+FanCar.prototype.kCenterBubbleScale = 1.3;
 
 FanCar.prototype.attachHandlers = function() {
     var that = this;
@@ -63,6 +65,9 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     var windowSize = Util.getWindowSize();
     this.m_xCenterOffset = windowSize.w / 2;
 
+    // the range in the center of the screen in which elements zoom in.
+    this.m_bubbleRangeAbs = this.kCenterBubbleRangeFactor * this.m_xCenterOffset;
+
     this.m_basePaddingX = windowSize.w * this.kPaddingXFactor;
     this.m_basePaddingY = windowSize.h * this.kPaddingYFactor;
 
@@ -72,6 +77,7 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     this.m_totalListWidth = numEls * this.m_baseElementSize + ((numEls + 1) * this.m_basePaddingX);
     this.m_list.style.width = this.m_totalListWidth + 'px';
 
+    // TODO: resolve this or remove it.
     // assumption is that the carousel effect gradually zooms in the elements closest to the
     // center of the window, but each element's center point is fixed relative to the container.
     // this implies that as the centermost elements grow, the free space between them changes.
@@ -83,9 +89,24 @@ FanCar.prototype.calculateCenterPointForListEl = function(i) {
     return i * (this.m_baseElementSize + this.m_basePaddingX) + this.m_basePaddingX + (this.m_baseElementSize / 2);
 }
 
+FanCar.prototype.getElScale = function(i)
+{
+    var thisElCenterPoint = this.m_basePaddingX + i * (this.m_baseElementSize + this.m_basePaddingX) + (this.m_baseElementSize / 2);
+    var distanceToCenter = Math.abs(thisElCenterPoint - this.m_currentCenterPoint);
+    var scaleFactor = Math.min(1, Math.max(0, (this.m_bubbleRangeAbs - distanceToCenter) / this.m_bubbleRangeAbs));
+
+    // smooth using sin(x)
+    scaleFactor = scaleFactor * Math.PI / 2;
+    scaleFactor = Math.sin(scaleFactor);
+
+    var result = scaleFactor * (this.kCenterBubbleScale - 1) + 1;
+    Util.log('scale. factor=' + scaleFactor + '  result=' + result);
+    return result;
+}
+
 FanCar.prototype.doLayout = function() {
     for( var i = 0; i < this.m_listEls.length; ++i ) {
-	var thisScale = 1;  // TODO scale grows when close to window center.
+	var thisScale = this.getElScale(i);
 	var thisElementSize = thisScale * this.m_baseElementSize;
 	var thisCenterX = this.m_basePaddingX + i * (this.m_basePaddingX + this.m_baseElementSize) + (this.m_baseElementSize / 2);
 	var thisCenterY = this.m_basePaddingY + (this.m_baseElementSize / 2);
