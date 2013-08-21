@@ -21,5 +21,9 @@ var Util = {
 	return {w: x, h: y};
     },
 
+    getCurrentTimeMs: function() {
+	return (new Date()).getTime();
+    },
+
     // TODO consider adding bind() here
 };

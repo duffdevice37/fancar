@@ -1,3 +1,5 @@
+// Carousel control implemented in javascript. Supports momentum and "magnetism" for pulling to discrete elements.
+//  By Gideon Goodwin 8-21-2013
 FanCar = function() {
     this.m_containerEl = document.querySelector('div.carousel');
     this.m_list = document.querySelector('div.carousel ul');
@@ -8,12 +10,15 @@ FanCar = function() {
     this.m_currentCenterPoint = this.calculateCenterPointForListEl(0);
     this.m_currentVelocity = 2000;  // x pixels per second
 
+    this.m_lastDragInfo = null;
     this.attachHandlers();
+
     this.doLayout();
     this.startUpdateTick();
 }
 
 // class constants
+// TODO: consider making x padding a fixed value instead. e.g. on ipad portrait mode this value calculates to be pretty small.
 FanCar.prototype.kPaddingXFactor = 0.1;  // padding values specified as factors so it scales with window size.
 FanCar.prototype.kPaddingYFactor = 0.2;
 FanCar.prototype.kFrictionDecel = 1000;   // pixels per second^2
@@ -25,8 +30,32 @@ FanCar.prototype.attachHandlers = function() {
 	that.doLayout();
     });
 
+    window.addEventListener('mousedown', function(e) {
+	that.m_lastDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+	e.preventDefault();
+	return false;
+    });
 
-    // TODO: input event handlers.
+    window.addEventListener('mousemove', function(e) {
+	if (!that.m_lastDragInfo) {
+	    return;
+	}
+
+	var lastDragInfo = that.m_lastDragInfo;
+	var currentDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+	var elapsedS = (currentDragInfo.time - lastDragInfo.time) / 1000;
+	that.m_currentVelocity = (lastDragInfo.x - currentDragInfo.x) / elapsedS;
+	that.m_lastDragInfo = currentDragInfo;
+
+	e.preventDefault();
+	return false;
+    });
+
+    window.addEventListener('mouseup', function(e) {
+	that.m_lastDragInfo = null;
+	e.preventDefault();
+	return false;
+    });
 }
 
 // cache/set layout-related values for the current window size.
@@ -87,6 +116,8 @@ FanCar.prototype.updateState = function(elapsedS) {
     } else {
 	this.m_currentVelocity = Math.min(0, this.m_currentVelocity + (elapsedS * this.kFrictionDecel));
     }
+
+    // TODO magnetism. may want to skip this if currently dragging.
 }
 
 FanCar.prototype.startUpdateTick = function() {
@@ -94,7 +125,7 @@ FanCar.prototype.startUpdateTick = function() {
     var lastUpdateTime = null;
 
     var updateTick = function() {
-	var now = (new Date()).getTime();
+	var now = Util.getCurrentTimeMs();
 	if (lastUpdateTime === null) {
 	    lastUpdateTime = now;
 	    return;
