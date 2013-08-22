@@ -40,33 +40,43 @@ FanCar.prototype.attachHandlers = function() {
 	that.doLayout();
     });
 
-    window.addEventListener('mousedown', function(e) {
-	that.m_lastDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+    var onDown = function(e) {
+	that.m_lastDragInfo = null;
 	that.m_dragging = true;
 	e.preventDefault();
 	return false;
-    });
+    };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('touchstart', function(e) { onDown(e.touches[0]); e.preventDefault(); });
 
-    window.addEventListener('mousemove', function(e) {
+    var onMove = function(e) {
 	if (!that.m_dragging) {
 	    return;
 	}
 
 	var lastDragInfo = that.m_lastDragInfo;
 	var currentDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+	if (!lastDragInfo) {
+	    that.m_lastDragInfo = currentDragInfo;
+	    return;
+	}
 	var elapsedS = (currentDragInfo.time - lastDragInfo.time) / 1000;
 	that.m_currentVelocity = (lastDragInfo.x - currentDragInfo.x) / elapsedS;
 	that.m_lastDragInfo = currentDragInfo;
 
 	e.preventDefault();
 	return false;
-    });
+    };
+    window.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', function(e) { onMove(e.touches[0]); e.preventDefault(); });
 
-    window.addEventListener('mouseup', function(e) {
+    var onUp = function(e) {
 	that.m_dragging = false;
 	e.preventDefault();
 	return false;
-    });
+    };
+    window.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', function(e) { onUp(e.touches[0]); e.preventDefault(); });
 }
 
 // cache/set layout-related values for the current window size.
