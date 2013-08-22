@@ -7,10 +7,13 @@ FanCar = function() {
 
     this.calculateLayoutForCurrentWindowSize();
 
-    this.m_currentCenterPoint = this.calculateCenterPointForListEl(0);
+    this.m_currentCenterOffset = this.calculateCenterOffsetForListEl(0);
     this.m_currentVelocity = 0;
 
+    this.m_snapActive = false;
+
     this.m_lastDragInfo = null;
+    this.m_dragging = false;
     this.attachHandlers();
 
     this.doLayout();
@@ -18,12 +21,15 @@ FanCar = function() {
 }
 
 // class constants
-// TODO: consider making x padding a fixed value instead. e.g. on ipad portrait mode this value calculates to be pretty small.
-FanCar.prototype.kPaddingXFactor = 0.1;  // padding values specified as factors so it scales with window size.
-FanCar.prototype.kPaddingYFactor = 0.2;
-FanCar.prototype.kFrictionDecel = 1400;   // pixels per second^2
-FanCar.prototype.kCenterBubbleRangeFactor = 0.4;  // this fraction of the screen causes items to zoom in
+FanCar.prototype.kPaddingXPixels = 100;
+FanCar.prototype.kPaddingYFactor = 0.25;
+FanCar.prototype.kFrictionDecel = 2500;   // pixels per second^2
+FanCar.prototype.kCenterBubbleRangeFactor = 0.6;  // this fraction of width causes items to zoom in
 FanCar.prototype.kCenterBubbleScale = 1.3;
+FanCar.prototype.kSnapAccel = 120;
+FanCar.prototype.kMaxVelocity = 8000;
+FanCar.prototype.kSnapDebounceThreshold = 20;
+FanCar.prototype.kSnapVelThreshold = 300;
 
 FanCar.prototype.attachHandlers = function() {
     var that = this;
@@ -34,12 +40,13 @@ FanCar.prototype.attachHandlers = function() {
 
     window.addEventListener('mousedown', function(e) {
 	that.m_lastDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+	that.m_dragging = true;
 	e.preventDefault();
 	return false;
     });
 
     window.addEventListener('mousemove', function(e) {
-	if (!that.m_lastDragInfo) {
+	if (!that.m_dragging) {
 	    return;
 	}
 
@@ -54,7 +61,7 @@ FanCar.prototype.attachHandlers = function() {
     });
 
     window.addEventListener('mouseup', function(e) {
-	that.m_lastDragInfo = null;
+	that.m_dragging = false;
 	e.preventDefault();
 	return false;
     });
@@ -68,7 +75,7 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     // the range in the center of the screen in which elements zoom in.
     this.m_bubbleRangeAbs = this.kCenterBubbleRangeFactor * this.m_xCenterOffset;
 
-    this.m_basePaddingX = windowSize.w * this.kPaddingXFactor;
+    this.m_basePaddingX = this.kPaddingXPixels;
     this.m_basePaddingY = windowSize.h * this.kPaddingYFactor;
 
     this.m_baseElementSize = windowSize.h - (2 * this.m_basePaddingY);  // elements are square so this is both width and height.
@@ -76,32 +83,29 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     var numEls = this.m_listEls.length;
     this.m_totalListWidth = numEls * this.m_baseElementSize + ((numEls + 1) * this.m_basePaddingX);
     this.m_list.style.width = this.m_totalListWidth + 'px';
-
-    // TODO: resolve this or remove it.
-    // assumption is that the carousel effect gradually zooms in the elements closest to the
-    // center of the window, but each element's center point is fixed relative to the container.
-    // this implies that as the centermost elements grow, the free space between them changes.
-    // may look better to have the free space stay fixed/or have a more sophisticated model overall.
 }
 
 // returns the x offset into the list that should be centered for the i'th list element.
-FanCar.prototype.calculateCenterPointForListEl = function(i) {
+FanCar.prototype.calculateCenterOffsetForListEl = function(i) {
     return i * (this.m_baseElementSize + this.m_basePaddingX) + this.m_basePaddingX + (this.m_baseElementSize / 2);
+}
+
+// inverse of above, used for calculating nearest snap points.
+FanCar.prototype.calculateListElIndexForOffset = function(offset) {
+    return (offset - (this.m_baseElementSize / 2) - this.m_basePaddingX) / (this.m_baseElementSize + this.m_basePaddingX);
 }
 
 FanCar.prototype.getElScale = function(i)
 {
     var thisElCenterPoint = this.m_basePaddingX + i * (this.m_baseElementSize + this.m_basePaddingX) + (this.m_baseElementSize / 2);
-    var distanceToCenter = Math.abs(thisElCenterPoint - this.m_currentCenterPoint);
+    var distanceToCenter = Math.abs(thisElCenterPoint - this.m_currentCenterOffset);
     var scaleFactor = Math.min(1, Math.max(0, (this.m_bubbleRangeAbs - distanceToCenter) / this.m_bubbleRangeAbs));
 
-    // smooth using sin(x)
-    scaleFactor = scaleFactor * Math.PI / 2;
-    scaleFactor = Math.sin(scaleFactor);
+    // smooth using sin(x)...nah, doesn't feel right.
+    // scaleFactor = scaleFactor * Math.PI / 2;
+    // scaleFactor = Math.sin(scaleFactor);
 
-    var result = scaleFactor * (this.kCenterBubbleScale - 1) + 1;
-    Util.log('scale. factor=' + scaleFactor + '  result=' + result);
-    return result;
+    return Util.interpolate(1, this.kCenterBubbleScale, scaleFactor);
 }
 
 FanCar.prototype.doLayout = function() {
@@ -117,28 +121,64 @@ FanCar.prototype.doLayout = function() {
 	thisEl.style.width  = Math.round(thisElementSize) + 'px';
 	thisEl.style.height = Math.round(thisElementSize) + 'px';
     }
-    this.m_list.style.left = Math.round(this.m_xCenterOffset - this.m_currentCenterPoint) + 'px';
+    this.m_list.style.left = Math.round(this.m_xCenterOffset - this.m_currentCenterOffset) + 'px';
+}
+
+FanCar.prototype.handleSnap = function() {
+    var snapLeftIndex = Math.floor(this.calculateListElIndexForOffset(this.m_currentCenterOffset));
+    snapLeftIndex = Math.max(0, Math.min(this.m_listEls.length - 1, snapLeftIndex));
+
+    var leftOffset = this.calculateCenterOffsetForListEl(snapLeftIndex) - this.m_currentCenterOffset;
+    var targetSnapOffset = leftOffset;
+    var snapRightIndex = snapLeftIndex + 1;
+    if (snapRightIndex < this.m_listEls.length) {
+	var rightOffset = this.calculateCenterOffsetForListEl(snapRightIndex) - this.m_currentCenterOffset;
+	if (Math.abs(rightOffset) < Math.abs(leftOffset)) {
+	    targetSnapOffset = rightOffset;
+	}
+    }
+
+    // within snap threshold?
+    if (Math.abs(targetSnapOffset) < this.kSnapDebounceThreshold) {
+	this.m_currentCenterOffset += targetSnapOffset;
+	this.m_currentVelocity = 0;
+	this.m_snapActive = false;
+    } else {
+	if (targetSnapOffset > 0) {
+	    this.m_currentVelocity += this.kSnapAccel;
+	} else if (targetSnapOffset < 0) {
+	    this.m_currentVelocity -= this.kSnapAccel;
+	}
+    }
 }
 
 FanCar.prototype.updateState = function(elapsedS) {
-    if (this.m_currentVelocity === 0) {
-	// not moving, nothing changed.
-	return;
+    // update visible dom (only if velocity is nonzero).
+    if (this.m_currentVelocity != 0) {
+	var thisOffset = this.m_currentVelocity * elapsedS;
+	this.m_currentCenterOffset += thisOffset;
+	this.doLayout();
     }
 
-    // use current velocity to update current screen centerpoint.
-    var thisOffset = this.m_currentVelocity * elapsedS;
-    this.m_currentCenterPoint += thisOffset;
-    this.doLayout();
-
-    // then update current velocity to simulate friction and magnetism.
+    // update current velocity to simulate friction.
     if (this.m_currentVelocity > 0) {
 	this.m_currentVelocity = Math.max(0, this.m_currentVelocity - (elapsedS * this.kFrictionDecel));
     } else {
 	this.m_currentVelocity = Math.min(0, this.m_currentVelocity + (elapsedS * this.kFrictionDecel));
     }
 
-    // TODO magnetism. may want to skip this if currently dragging.
+    // potentially start a snap to an element's center position, but not if we are currently dragging, and
+    //  only if our velocity has slowed enough for it to kick in.
+    if (!this.m_dragging && Math.abs(this.m_currentVelocity) < this.kSnapVelThreshold) {
+	this.m_snapActive = true;
+    }
+
+    if (this.m_snapActive) {
+	this.handleSnap();
+    }
+
+    // clip
+    this.m_currentVelocity = Math.min(this.kMaxVelocity, Math.max(-this.kMaxVelocity, this.m_currentVelocity));
 }
 
 FanCar.prototype.startUpdateTick = function() {

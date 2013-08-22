@@ -25,5 +25,9 @@ var Util = {
 	return (new Date()).getTime();
     },
 
+    interpolate: function(min, max, factor) {
+	return factor * (max - min) + min;
+    },
+
     // TODO consider adding bind() here
 };
