@@ -11,7 +11,6 @@ var Util = {
     },
 
     getWindowSize: function() {
-	// from http://stackoverflow.com/questions/3437786/how-to-get-web-page-size-browser-window-size-screen-size-in-a-cross-browser-wa
 	var w = window,
 	d = document,
 	e = d.documentElement,
@@ -29,5 +28,15 @@ var Util = {
 	return factor * (max - min) + min;
     },
 
-    // TODO consider adding bind() here
+    requestAnimFrame: function(cb) {
+	if (window.requestAnimationFrame) {
+	    window.requestAnimationFrame(cb);
+	} else if (window.webkitRequestAnimationFrame) {
+	    window.webkitRequestAnimationFrame(cb);
+	} else if (window.mozRequestAnimationFrame) {
+	    window.mozRequestAnimationFrame(cb);
+	} else {
+	    window.setTimeout(cb, 1000 / 60);
+	}
+    },
 };

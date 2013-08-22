@@ -21,9 +21,9 @@ FanCar = function() {
 }
 
 // class constants
-FanCar.prototype.kPaddingXPixels = 100;
+FanCar.prototype.kPaddingXPixels = 230;
 FanCar.prototype.kPaddingYFactor = 0.25;
-FanCar.prototype.kFrictionDecel = 2500;   // pixels per second^2
+FanCar.prototype.kFrictionDecel = 3200;   // pixels per second^2
 FanCar.prototype.kCenterBubbleRangeFactor = 0.6;  // this fraction of width causes items to zoom in
 FanCar.prototype.kCenterBubbleScale = 1.3;
 FanCar.prototype.kSnapAccel = 120;
@@ -215,10 +215,12 @@ FanCar.prototype.startUpdateTick = function() {
 	var elapsedS = (now - lastUpdateTime) / 1000;
 	that.updateState(elapsedS);
 	lastUpdateTime = now;
-    }
+    };
 
-    // TODO: investigate onDisplayFrame event thingie.
-    setInterval(updateTick, 16);
+    (function updateLoop(){
+	Util.requestAnimFrame(updateLoop);
+	updateTick();
+    })();
 }
 
 FanCar.prototype.show = function() {
