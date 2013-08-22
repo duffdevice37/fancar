@@ -30,6 +30,8 @@ FanCar.prototype.kSnapAccel = 120;
 FanCar.prototype.kMaxVelocity = 8000;
 FanCar.prototype.kSnapDebounceThreshold = 20;
 FanCar.prototype.kSnapVelThreshold = 300;
+FanCar.prototype.kOutOfBoundsVelocityFactor = 0.5;
+
 
 FanCar.prototype.attachHandlers = function() {
     var that = this;
@@ -83,6 +85,9 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     var numEls = this.m_listEls.length;
     this.m_totalListWidth = numEls * this.m_baseElementSize + ((numEls + 1) * this.m_basePaddingX);
     this.m_list.style.width = this.m_totalListWidth + 'px';
+
+    this.m_lowerBoundOffset = this.calculateCenterOffsetForListEl(0);
+    this.m_upperBoundOffset = this.calculateCenterOffsetForListEl(this.m_listEls.length - 1);
 }
 
 // returns the x offset into the list that should be centered for the i'th list element.
@@ -153,8 +158,15 @@ FanCar.prototype.handleSnap = function() {
 }
 
 FanCar.prototype.updateState = function(elapsedS) {
-    // update visible dom (only if velocity is nonzero).
     if (this.m_currentVelocity != 0) {
+	// dampen velocity if they are out of bounds.
+	if (this.m_currentCenterOffset < this.m_lowerBoundOffset && this.m_currentVelocity < 0) {
+	    this.m_currentVelocity *= this.kOutOfBoundsVelocityFactor;
+	} else if (this.m_currentCenterOffset > this.m_upperBoundOffset && this.m_currentVelocity > 0) {
+	    this.m_currentVelocity *= this.kOutOfBoundsVelocityFactor;
+	}
+
+	// update visible dom (only if velocity is nonzero).
 	var thisOffset = this.m_currentVelocity * elapsedS;
 	this.m_currentCenterOffset += thisOffset;
 	this.doLayout();
