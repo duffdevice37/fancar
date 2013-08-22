@@ -28,7 +28,7 @@ FanCar.prototype.kCenterBubbleRangeFactor = 0.6;  // this fraction of width caus
 FanCar.prototype.kCenterBubbleScale = 1.3;
 FanCar.prototype.kSnapAccel = 120;
 FanCar.prototype.kMaxVelocity = 8000;
-FanCar.prototype.kSnapDebounceThreshold = 5;
+FanCar.prototype.kSnapDebounceThreshold = 10;
 FanCar.prototype.kSnapVelThreshold = 300;
 FanCar.prototype.kOutOfBoundsVelocityFactor = 0.5;
 
