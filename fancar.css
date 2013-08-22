@@ -57,3 +57,20 @@ div.carousel {
     /* rounded borders */
     border-radius: 18px;
 }
+
+/* a little voodoo to get gpu acceleration on the list elements in mobile safari */
+div, ul, li {
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    -o-transform: translateZ(0);
+    transform: translateZ(0);
+
+    -moz-transition: all 0s;
+    -webkit-transition: all 0s;
+    -o-transition: all 0s;
+    transition: all 0s;
+
+    -webkit-backface-visibility: hidden;
+    -webkit-perspective: 1000;
+}
