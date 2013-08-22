@@ -1,12 +1,3 @@
-/* TODO:
-  - gradient background.
-  - drop shadow.
-  - rounded borders.
-
-  - what needs to happen for gpu to kick in on ipad?
-*/
-
-
 /* resets */
 html, body, div, ul, li {
     margin: 0px;
@@ -22,6 +13,13 @@ body {
     background-color: #222;
     font-size: 22px;
     overflow:hidden;
+
+    /* gradient background */
+    background-image: -ms-linear-gradient(top, #000000 20%, #606074 100%);
+    background-image: -moz-linear-gradient(top, #000000 20%, #606074 100%);
+    background-image: -o-linear-gradient(top, #000000 20%, #606074 100%);
+    background-image: -webkit-linear-gradient(top, #000000 20%, #606074 100%);
+    background-image: linear-gradient(to bottom, #000000 20%, #606074 100%);
 }
 
 p {
@@ -45,4 +43,17 @@ div.carousel {
 .carousel li {
     position: absolute;  /* layout managed by javascript */
     background-color: #22b;
+
+    /* gradient background */
+    background-image: -ms-linear-gradient(top, #0564C0 20%, #094594 100%);
+    background-image: -moz-linear-gradient(top, #0564C0 20%, #094594 100%);
+    background-image: -o-linear-gradient(top, #0564C0 20%, #094594 100%);
+    background-image: -webkit-linear-gradient(top, #0564C0 20%, #094594 100%);
+    background-image: linear-gradient(to bottom, #0564C0 20%, #094594 100%);
+
+    /* drop shadow */
+    box-shadow: 0 0 10px #111;
+
+    /* rounded borders */
+    border-radius: 18px;
 }
