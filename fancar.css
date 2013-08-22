@@ -1,5 +1,5 @@
 /* resets */
-html, body, div, ul, li {
+html, body, div, ul, li, p {
     margin: 0px;
     padding: 0px;
 }
@@ -20,10 +20,6 @@ body {
     background-image: -o-linear-gradient(top, #000000 20%, #606074 100%);
     background-image: -webkit-linear-gradient(top, #000000 20%, #606074 100%);
     background-image: linear-gradient(to bottom, #000000 20%, #606074 100%);
-}
-
-p {
-    margin: 24px;
 }
 
 div.carousel {
@@ -73,4 +69,19 @@ div, ul, li {
 
     -webkit-backface-visibility: hidden;
     -webkit-perspective: 1000;
+}
+
+.splash {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    opacity: 1;
+
+    -webkit-transition: opacity 1s linear;
+    -ms-transition: opacity 1s linear;
+    transition: opacity 1s linear;
+}
+
+.fadeAway {
+    opacity: 0;
 }

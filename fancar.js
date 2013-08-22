@@ -8,7 +8,7 @@ FanCar = function() {
     this.calculateLayoutForCurrentWindowSize();
 
     this.m_currentCenterOffset = this.calculateCenterOffsetForListEl(0);
-    this.m_currentVelocity = 0;
+    this.m_currentVelocity = 3800;
 
     this.m_snapActive = false;
 

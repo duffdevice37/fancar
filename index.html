@@ -23,11 +23,16 @@
 	    </ul>
 	</div>
 
+	<p class="splash">The Carousel Test - by Gideon Goodwin</p>
+
 	<script type="text/javascript" src="util.js"></script>
 	<script type="text/javascript" src="fancar.js"></script>
 	<script type="text/javascript">
 	    var fanCar = new FanCar();
 	    fanCar.show();
+	    setTimeout(function() {
+	      document.querySelector('.splash').className += ' fadeAway';
+	    }, 1000);
 	</script>
 
     </body>
