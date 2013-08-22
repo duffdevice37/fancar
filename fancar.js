@@ -94,6 +94,10 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
 
     this.m_lowerBoundOffset = this.calculateCenterOffsetForListEl(0);
     this.m_upperBoundOffset = this.calculateCenterOffsetForListEl(this.m_listEls.length - 1);
+
+    // snap during resize so we try to preserve original logical spot even though box size is changing.
+    this.m_snapActive = true;
+    this.handleSnap();
 }
 
 // returns the x offset into the list that should be centered for the i'th list element.
