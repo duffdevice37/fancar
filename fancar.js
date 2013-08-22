@@ -23,7 +23,7 @@ FanCar = function() {
 // class constants
 FanCar.prototype.kPaddingXPixels = 230;
 FanCar.prototype.kPaddingYFactor = 0.25;
-FanCar.prototype.kFrictionDecel = 3200;   // pixels per second^2
+FanCar.prototype.kFrictionDecel = 2900;   // pixels per second^2
 FanCar.prototype.kCenterBubbleRangeFactor = 0.6;  // this fraction of width causes items to zoom in
 FanCar.prototype.kCenterBubbleScale = 1.3;
 FanCar.prototype.kSnapAccel = 120;
@@ -56,13 +56,15 @@ FanCar.prototype.attachHandlers = function() {
 
 	var lastDragInfo = that.m_lastDragInfo;
 	var currentDragInfo = { x: e.pageX, time: Util.getCurrentTimeMs() };
+	that.m_lastDragInfo = currentDragInfo;
 	if (!lastDragInfo) {
-	    that.m_lastDragInfo = currentDragInfo;
 	    return;
 	}
 	var elapsedS = (currentDragInfo.time - lastDragInfo.time) / 1000;
+	if (elapsedS === 0) {
+	    return;
+	}
 	that.m_currentVelocity = (lastDragInfo.x - currentDragInfo.x) / elapsedS;
-	that.m_lastDragInfo = currentDragInfo;
 
 	e.preventDefault();
 	return false;
