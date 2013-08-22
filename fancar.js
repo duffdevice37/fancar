@@ -1,4 +1,4 @@
-// Carousel control implemented in javascript. Supports momentum and "magnetism" for pulling to discrete elements.
+// Carousel control implemented in javascript. Supports momentum and snap for pulling to discrete elements.
 //  By Gideon Goodwin 8-21-2013
 FanCar = function() {
     this.m_containerEl = document.querySelector('div.carousel');
@@ -92,10 +92,6 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
 
     this.m_baseElementSize = windowSize.h - (2 * this.m_basePaddingY);  // elements are square so this is both width and height.
 
-    var numEls = this.m_listEls.length;
-    this.m_totalListWidth = numEls * this.m_baseElementSize + ((numEls + 1) * this.m_basePaddingX);
-    this.m_list.style.width = this.m_totalListWidth + 'px';
-
     this.m_lowerBoundOffset = this.calculateCenterOffsetForListEl(0);
     this.m_upperBoundOffset = this.calculateCenterOffsetForListEl(this.m_listEls.length - 1);
 }
@@ -120,7 +116,7 @@ FanCar.prototype.getElScale = function(i)
 }
 
 FanCar.prototype.doLayout = function() {
-    for( var i = 0; i < this.m_listEls.length; ++i ) {
+    for(var i = 0; i < this.m_listEls.length; ++i) {
 	var thisScale = this.getElScale(i);
 	var thisElementSize = thisScale * this.m_baseElementSize;
 	var thisCenterX = this.m_basePaddingX + i * (this.m_basePaddingX + this.m_baseElementSize) + (this.m_baseElementSize / 2);

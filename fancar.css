@@ -21,6 +21,7 @@ body {
     color: #fff;
     background-color: #222;
     font-size: 22px;
+    overflow:hidden;
 }
 
 p {
@@ -34,13 +35,11 @@ div.carousel {
     white-space: nowrap;
 
     height:100%;
-    /* TODO: prevent manual scrolling */
 }
 
 .carousel ul {
     position:absolute;
     list-style-type: none;
-    overflow:none;
 }
 
 .carousel li {
