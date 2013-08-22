@@ -28,7 +28,7 @@ FanCar.prototype.kCenterBubbleRangeFactor = 0.6;  // this fraction of width caus
 FanCar.prototype.kCenterBubbleScale = 1.3;
 FanCar.prototype.kSnapAccel = 120;
 FanCar.prototype.kMaxVelocity = 8000;
-FanCar.prototype.kSnapDebounceThreshold = 20;
+FanCar.prototype.kSnapDebounceThreshold = 5;
 FanCar.prototype.kSnapVelThreshold = 300;
 FanCar.prototype.kOutOfBoundsVelocityFactor = 0.5;
 
@@ -116,10 +116,6 @@ FanCar.prototype.getElScale = function(i)
     var distanceToCenter = Math.abs(thisElCenterPoint - this.m_currentCenterOffset);
     var scaleFactor = Math.min(1, Math.max(0, (this.m_bubbleRangeAbs - distanceToCenter) / this.m_bubbleRangeAbs));
 
-    // smooth using sin(x)...nah, doesn't feel right.
-    // scaleFactor = scaleFactor * Math.PI / 2;
-    // scaleFactor = Math.sin(scaleFactor);
-
     return Util.interpolate(1, this.kCenterBubbleScale, scaleFactor);
 }
 
@@ -156,6 +152,9 @@ FanCar.prototype.handleSnap = function() {
     // within snap threshold?
     if (Math.abs(targetSnapOffset) < this.kSnapDebounceThreshold) {
 	this.m_currentCenterOffset += targetSnapOffset;
+	this.doLayout();  // since offset changed. (velocity is zero so this won't happen during update loop).
+
+	this.m_lastSnappedOffset = this.m_currentCenterOffset;  // optimization allows us to avoid snap check until we move.
 	this.m_currentVelocity = 0;
 	this.m_snapActive = false;
     } else {
@@ -176,7 +175,7 @@ FanCar.prototype.updateState = function(elapsedS) {
 	    this.m_currentVelocity *= this.kOutOfBoundsVelocityFactor;
 	}
 
-	// update visible dom (only if velocity is nonzero).
+	// update visible dom.
 	var thisOffset = this.m_currentVelocity * elapsedS;
 	this.m_currentCenterOffset += thisOffset;
 	this.doLayout();
@@ -191,7 +190,10 @@ FanCar.prototype.updateState = function(elapsedS) {
 
     // potentially start a snap to an element's center position, but not if we are currently dragging, and
     //  only if our velocity has slowed enough for it to kick in.
-    if (!this.m_dragging && Math.abs(this.m_currentVelocity) < this.kSnapVelThreshold) {
+    if (!this.m_dragging
+	  && Math.abs(this.m_currentVelocity) < this.kSnapVelThreshold
+          && this.m_lastSnappedOffset !== this.m_currentCenterOffset)
+    {
 	this.m_snapActive = true;
     }
 
