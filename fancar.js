@@ -8,7 +8,7 @@ FanCar = function() {
     this.calculateLayoutForCurrentWindowSize();
 
     this.m_currentCenterOffset = this.calculateCenterOffsetForListEl(0);
-    this.m_currentVelocity = 3800;
+    this.m_currentVelocity = 0;
 
     this.m_snapActive = false;
 
@@ -47,7 +47,7 @@ FanCar.prototype.attachHandlers = function() {
 	return false;
     };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('touchstart', function(e) { onDown(e.touches[0]); e.preventDefault(); });
+    window.addEventListener('touchstart', onDown);
 
     var onMove = function(e) {
 	if (!that.m_dragging) {
@@ -61,16 +61,15 @@ FanCar.prototype.attachHandlers = function() {
 	    return;
 	}
 	var elapsedS = (currentDragInfo.time - lastDragInfo.time) / 1000;
-	if (elapsedS === 0) {
+	if (elapsedS < 0.01) {  // ignore suspiciously short intervals (one frame is 0.016 seconds)
 	    return;
 	}
 	that.m_currentVelocity = (lastDragInfo.x - currentDragInfo.x) / elapsedS;
-
 	e.preventDefault();
 	return false;
     };
     window.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', function(e) { onMove(e.touches[0]); e.preventDefault(); });
+    document.addEventListener('touchmove', onMove);
 
     var onUp = function(e) {
 	that.m_dragging = false;
@@ -78,7 +77,7 @@ FanCar.prototype.attachHandlers = function() {
 	return false;
     };
     window.addEventListener('mouseup', onUp);
-    document.addEventListener('touchend', function(e) { onUp(e.touches[0]); e.preventDefault(); });
+    document.addEventListener('touchend', onUp);
 }
 
 // cache/set layout-related values for the current window size.
@@ -98,7 +97,6 @@ FanCar.prototype.calculateLayoutForCurrentWindowSize = function() {
     this.m_upperBoundOffset = this.calculateCenterOffsetForListEl(this.m_listEls.length - 1);
 
     // snap during resize so we try to preserve original logical spot even though box size is changing.
-    this.m_snapActive = true;
     this.handleSnap();
 }
 
